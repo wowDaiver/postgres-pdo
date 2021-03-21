@@ -7,10 +7,13 @@ class Pdo {
         this._where = null;
         this._columns = null;
         this._values = null;
+        this._groupBy = null;
+        this._select = null;
     }
 
-    select() {
+    select(select = ['*']) {
         this._type = 'select';
+        this._select = select;
         return this;
     }
 
@@ -89,6 +92,11 @@ class Pdo {
         return this;
     }
 
+    groupBy(groupBy) {
+        this._groupBy = groupBy;
+        return this;
+    }
+
     escape(value) {
         if (value.toString().replace(/(\d|\.)/g, '').length === 0) {
             return parseFloat(value);
@@ -101,9 +109,12 @@ class Pdo {
         let query;
         switch (this._type) {
             case 'select':
-                query = `SELECT * FROM ${this._table}`;
+                query = `SELECT ${this._select?.join(',')} FROM ${this._table}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
+                }
+                if (this._groupBy) {
+                    query += ` GROUP BY ${this._groupBy}`;
                 }
                 return this.client.unsafe(query);
             case 'insert':
