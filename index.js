@@ -1,6 +1,8 @@
 class Pdo {
-    constructor(client) {
+    constructor(client, options = {}) {
         this.client = client;
+        this.escape = options.escapeCb || escape;
+        this.unescape = options.unescapeCb || unescape;
 
         this.clean();
     }
@@ -81,22 +83,22 @@ class Pdo {
     }
 
     where(clause, cond, value) {
-        this._where = `${clause} ${cond} ${this.escape(value)}`;
+        this._where = `${clause} ${cond} ${this.escapeData(value)}`;
         return this;
     }
 
     andWhere(clause, cond, value) {
-        this._where = `${this._where} AND ${clause} ${cond} ${this.escape(value)}`;
+        this._where = `${this._where} AND ${clause} ${cond} ${this.escapeData(value)}`;
         return this;
     }
 
     orWhere(clause, cond, value) {
-        this._where = `${this._where} OR ${clause} ${cond} ${this.escape(value)}`;
+        this._where = `${this._where} OR ${clause} ${cond} ${this.escapeData(value)}`;
         return this;
     }
 
     whereIn(clause, arr) {
-        this._where = `${clause} IN (${arr.map(this.escape).join(',')})`;
+        this._where = `${clause} IN (${arr.map(this.escapeData).join(',')})`;
         return this;
     }
 
@@ -105,11 +107,11 @@ class Pdo {
         return this;
     }
 
-    escape(value) {
+    escapeData(value) {
         if (value.toString().replace(/(\d|\.)/g, '').length === 0) {
             return parseFloat(value);
         } else {
-            return `'${escape(value)}'`;
+            return `'${this.escape(value)}'`;
         }
     }
 
@@ -126,11 +128,12 @@ class Pdo {
                 }
                 return this.client.unsafe(query);
             case 'insert':
-                query = `INSERT INTO ${this._table} (${this._columns?.join(',')}) VALUES (${this._values?.map(this.escape).join(',')})`;
+                query =
+                    `INSERT INTO ${this._table} (${this._columns?.join(',')}) VALUES (${this._values?.map(this.escapeData).join(',')})`;
                 return this.client.unsafe(query);
             case 'update':
                 query = `UPDATE ${this._table} SET ${this._values?.map((value, i) => {
-                    return `${this._columns[i]} = ${this.escape(value)}`;
+                    return `${this._columns[i]} = ${this.escapeData(value)}`;
                 }).join(',')}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
