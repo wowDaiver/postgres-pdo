@@ -2,6 +2,10 @@ class Pdo {
     constructor(client) {
         this.client = client;
 
+        this.clean();
+    }
+
+    clean() {
         this._type = null;
         this._table = null;
         this._where = null;
@@ -12,7 +16,8 @@ class Pdo {
     }
 
     select(select = ['*']) {
-        this._type = 'select';
+        this.clean();
+        this._type = 'select'
         this._select = select;
         return this;
     }
@@ -23,6 +28,7 @@ class Pdo {
     }
 
     update(pairs = null) {
+        this.clean();
         this._type = 'update';
         if (pairs) {
             this.set(pairs);
@@ -46,6 +52,7 @@ class Pdo {
     }
 
     insert(columns = null) {
+        this.clean();
         this._type = 'insert';
         this.columns(columns);
         return this;
@@ -67,6 +74,7 @@ class Pdo {
     }
 
     delete(table) {
+        this.clean();
         this._type = 'delete';
         this._table = table;
         return this;
