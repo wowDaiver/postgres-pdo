@@ -1,9 +1,7 @@
 class Pdo {
     constructor(client, options = {}) {
         this.client = client;
-        this.escape = options.escapeCb || escape;
-        this.unescape = options.unescapeCb || unescape;
-
+        this.escape = options.escapeCb ?? escape;
         this.clean();
     }
 
@@ -56,7 +54,16 @@ class Pdo {
     insert(columns = null) {
         this.clean();
         this._type = 'insert';
-        this.columns(columns);
+        if (columns) {
+            if (Array.isArray(columns)) {
+                this.columns(columns);
+            } else {
+                this.columns(Object.keys(columns));
+                this.values(Object.values(columns));
+            }
+        } else {
+            this.columns(columns);
+        }
         return this;
     }
 
@@ -102,20 +109,29 @@ class Pdo {
         return this;
     }
 
+    andWhereIn(clause, arr) {
+        this._where = `${this._where} AND ${clause} IN (${arr.map(this.escapeData).join(',')})`;
+        return this;
+    }
+
     groupBy(groupBy) {
         this._groupBy = groupBy;
         return this;
     }
 
     escapeData(value) {
-        if (value.toString().replace(/(\d|\.)/g, '').length === 0) {
+        if (typeof value === "boolean") {
+            return value;
+        } else if (typeof value === "number") {
+            return parseFloat(value);
+        } else if (value == +value) {
             return parseFloat(value);
         } else {
             return `'${this.escape(value)}'`;
         }
     }
 
-    execute() {
+    getQuery() {
         let query;
         switch (this._type) {
             case 'select':
@@ -126,11 +142,11 @@ class Pdo {
                 if (this._groupBy) {
                     query += ` GROUP BY ${this._groupBy}`;
                 }
-                return this.client.unsafe(query);
+                break;
             case 'insert':
                 query =
-                    `INSERT INTO ${this._table} (${this._columns?.join(',')}) VALUES (${this._values?.map(this.escapeData).join(',')})`;
-                return this.client.unsafe(query);
+                    `INSERT INTO ${this._table} (${this._columns?.join(',')}) VALUES (${this._values?.map((v) => this.escapeData(v)).join(',')})`;
+                break;
             case 'update':
                 query = `UPDATE ${this._table} SET ${this._values?.map((value, i) => {
                     return `${this._columns[i]} = ${this.escapeData(value)}`;
@@ -138,14 +154,20 @@ class Pdo {
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
-                return this.client.unsafe(query);
+                break;
             case 'delete':
                 query = `DELETE FROM ${this._table}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
-                return this.client.unsafe(query);
+                break;
         }
+        return query;
+    }
+
+    execute() {
+        const query = this.getQuery();
+        return this.client.unsafe(query);
     }
 }
 
