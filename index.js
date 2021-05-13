@@ -1,7 +1,8 @@
 class Pdo {
     constructor(client, options = {}) {
         this.client = client;
-        this.escape = options.escapeCb ?? escape;
+        this.escape = options.escapeCb ?? encodeURI;
+        this.unescape = options.unescapeCb ?? unescape;
         this.clean();
     }
 
@@ -13,6 +14,11 @@ class Pdo {
         this._values = null;
         this._groupBy = null;
         this._select = null;
+        this._join = null;
+        this._orderBy = null;
+        this._orderDirection = null;
+        this._limit = null;
+        this._offset = null;
     }
 
     select(select = ['*']) {
@@ -89,8 +95,18 @@ class Pdo {
         return this;
     }
 
+    leftJoin(joinTable, field1, cond, field2) {
+        this._join = `LEFT JOIN ${joinTable} ON ${field1} ${cond} ${field2}`;
+        return this;
+    }
+
     where(clause, cond, value) {
         this._where = `${clause} ${cond} ${this.escapeData(value)}`;
+        return this;
+    }
+
+    whereIsNull(clause) {
+        this._where = `${clause} IS NULL`;
         return this;
     }
 
@@ -105,7 +121,7 @@ class Pdo {
     }
 
     whereIn(clause, arr) {
-        this._where = `${clause} IN (${arr.map(this.escapeData).join(',')})`;
+        this._where = `${clause} IN (${arr.map(item => this.escapeData(item)).join(',')})`;
         return this;
     }
 
@@ -119,15 +135,31 @@ class Pdo {
         return this;
     }
 
+    orderBy(column, direction = 'ASC') {
+        this._orderBy = column;
+        this._orderDirection = direction;
+        return this;
+    }
+
+    limit(limit, offset = 0) {
+        this._limit = limit;
+        this._offset = offset;
+        return this;
+    }
+
     escapeData(value) {
-        if (typeof value === "boolean") {
-            return value;
-        } else if (typeof value === "number") {
-            return parseFloat(value);
-        } else if (value == +value) {
-            return parseFloat(value);
-        } else {
-            return `'${this.escape(value)}'`;
+        try {
+            if (typeof value === "boolean") {
+                return value;
+            } else if (typeof value === "number") {
+                return parseFloat(value);
+            } else if (value == +value) {
+                return parseFloat(value);
+            } else {
+                return `'${this.escape(value)}'`;
+            }
+        } catch (e) {
+            return `'${value}'`;
         }
     }
 
@@ -135,28 +167,44 @@ class Pdo {
         let query;
         switch (this._type) {
             case 'select':
-                query = `SELECT ${this._select?.join(',')} FROM ${this._table}`;
+                query = `SELECT ${this._select?.join(',')}
+                         FROM ${this._table}`;
+                if (this._join) {
+                    query += ` ${this._join}`;
+                }
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
                 if (this._groupBy) {
                     query += ` GROUP BY ${this._groupBy}`;
                 }
+                if (this._orderBy) {
+                    query += ` ORDER BY ${this._orderBy} ${this._orderDirection}`;
+                }
+                if (this._limit) {
+                    query += ` LIMIT ${this._limit}`;
+                }
+                if (this._offset) {
+                    query += ` OFFSET ${this._offset}`;
+                }
                 break;
             case 'insert':
                 query =
-                    `INSERT INTO ${this._table} (${this._columns?.join(',')}) VALUES (${this._values?.map((v) => this.escapeData(v)).join(',')})`;
+                    `INSERT INTO ${this._table} (${this._columns?.join(',')})
+                     VALUES (${this._values?.map((v) => this.escapeData(v)).join(',')})`;
                 break;
             case 'update':
-                query = `UPDATE ${this._table} SET ${this._values?.map((value, i) => {
-                    return `${this._columns[i]} = ${this.escapeData(value)}`;
-                }).join(',')}`;
+                query = `UPDATE ${this._table}
+                         SET ${this._values?.map((value, i) => {
+                             return `${this._columns[i]} = ${this.escapeData(value)}`;
+                         }).join(',')}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
                 break;
             case 'delete':
-                query = `DELETE FROM ${this._table}`;
+                query = `DELETE
+                         FROM ${this._table}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
