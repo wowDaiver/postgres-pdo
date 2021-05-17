@@ -151,9 +151,9 @@ class Pdo {
         try {
             if (typeof value === "boolean") {
                 return value;
+            } else if (typeof value === "string") {
+                return `'${this.escape(value)}'`;
             } else if (typeof value === "number") {
-                return parseFloat(value);
-            } else if (value == +value) {
                 return parseFloat(value);
             } else {
                 return `'${this.escape(value)}'`;
