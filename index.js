@@ -149,7 +149,9 @@ class Pdo {
 
     escapeData(value) {
         try {
-            if (typeof value === "boolean") {
+            if (value === null) {
+                return value;
+            } else if (typeof value === "boolean") {
                 return value;
             } else if (typeof value === "string") {
                 return `'${this.escape(value)}'`;
@@ -215,7 +217,14 @@ class Pdo {
 
     execute() {
         const query = this.getQuery();
-        return this.client.unsafe(query);
+        try {
+            return this.client.unsafe(query);
+        } catch (e) {
+            throw {
+                error: e,
+                query,
+            }
+        }
     }
 }
 
