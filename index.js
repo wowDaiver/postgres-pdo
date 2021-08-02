@@ -110,6 +110,16 @@ class Pdo {
         return this;
     }
 
+    orWhereIsNull(clause) {
+        this._where = `OR ${clause} IS NULL`;
+        return this;
+    }
+
+    andWhereIsNull(clause) {
+        this._where = `AND ${clause} IS NULL`;
+        return this;
+    }
+
     andWhere(clause, cond, value) {
         this._where = `${this._where} AND ${clause} ${cond} ${this.escapeData(value)}`;
         return this;
