@@ -111,12 +111,12 @@ class Pdo {
     }
 
     orWhereIsNull(clause) {
-        this._where = `OR ${clause} IS NULL`;
+        this._where = `${this._where} OR ${clause} IS NULL`;
         return this;
     }
 
     andWhereIsNull(clause) {
-        this._where = `AND ${clause} IS NULL`;
+        this._where = `${this._where} AND ${clause} IS NULL`;
         return this;
     }
 
