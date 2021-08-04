@@ -175,11 +175,15 @@ class Pdo {
         }
     }
 
+    join(arr) {
+        return arr.reduce((acc, cur) => acc + (acc ? ',' : '') + cur);
+    }
+
     getQuery() {
         let query;
         switch (this._type) {
             case 'select':
-                query = `SELECT ${this._select?.join(',')}
+                query = `SELECT ${this.join(this._select)}
                          FROM ${this._table}`;
                 if (this._join) {
                     query += ` ${this._join}`;
@@ -203,7 +207,7 @@ class Pdo {
             case 'insert':
                 query =
                     `INSERT INTO ${this._table} (${this._columns?.join(',')})
-                     VALUES (${this._values?.map((v) => this.escapeData(v)).join(',')})`;
+                     VALUES (${this.join(this._values?.map((v) => this.escapeData(v)))})`;
                 break;
             case 'update':
                 query = `UPDATE ${this._table}
