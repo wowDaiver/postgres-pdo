@@ -19,6 +19,7 @@ class Pdo {
         this._orderDirection = null;
         this._limit = null;
         this._offset = null;
+        this._returning = null;
     }
 
     select(select = ['*']) {
@@ -70,6 +71,11 @@ class Pdo {
         } else {
             this.columns(columns);
         }
+        return this;
+    }
+
+    returning(id) {
+        this._returning = id;
         return this;
     }
 
@@ -208,6 +214,9 @@ class Pdo {
                 query =
                     `INSERT INTO ${this._table} (${this._columns?.join(',')})
                      VALUES (${this.join(this._values?.map((v) => this.escapeData(v)))})`;
+                if (this._returning) {
+                    query += ` RETURNING ${this._returning}`;
+                }
                 break;
             case 'update':
                 query = `UPDATE ${this._table}
