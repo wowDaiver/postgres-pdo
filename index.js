@@ -226,6 +226,9 @@ class Pdo {
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
+                if (this._returning) {
+                    query += ` RETURNING ${this._returning}`;
+                }
                 break;
             case 'delete':
                 query = `DELETE
