@@ -182,7 +182,7 @@ class Pdo {
     }
 
     join(arr) {
-        return arr.reduce((acc, cur) => acc + (acc ? ',' : '') + cur);
+        return arr.reduce((acc, cur) => acc + (acc !== undefined ? ',' : '') + cur);
     }
 
     getQuery() {

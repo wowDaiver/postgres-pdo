@@ -1,6 +1,6 @@
 {
   "name": "postgres-pdo",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Postgres Data Objects",
   "main": "index.js",
   "scripts": {
