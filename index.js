@@ -4,6 +4,12 @@ class Pdo {
         this.escape = options.escapeCb ?? encodeURI;
         this.unescape = options.unescapeCb ?? unescape;
         this.clean();
+        this._catch = console.error;
+    }
+
+    catch(fn) {
+        this._catch = fn;
+        return this;
     }
 
     clean() {
@@ -236,8 +242,8 @@ class Pdo {
             case 'update':
                 query = `UPDATE ${this._table}
                          SET ${this._values?.map((value, i) => {
-                             return `${this._columns[i]} = ${this.escapeData(value)}`;
-                         }).join(',')}`;
+                    return `${this._columns[i]} = ${this.escapeData(value)}`;
+                }).join(',')}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
@@ -256,15 +262,12 @@ class Pdo {
         return query;
     }
 
-    execute() {
+    async execute() {
         const query = this.getQuery();
         try {
-            return this.client.unsafe(query);
+            return await this.client.unsafe(query);
         } catch (e) {
-            throw {
-                error: e,
-                query,
-            }
+            this._catch(e);
         }
     }
 }
