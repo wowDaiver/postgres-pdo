@@ -112,8 +112,8 @@ class Pdo {
         return this;
     }
 
-    where(clause, cond, value) {
-        this._where = `${clause} ${cond} ${this.escapeData(value)}`;
+    where(clause, cond, value, skipEscape = false) {
+        this._where = `${clause} ${cond} ${skipEscape ? value : this.escapeData(value)}`;
         return this;
     }
 
