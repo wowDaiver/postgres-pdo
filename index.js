@@ -20,7 +20,7 @@ class Pdo {
         this._values = null;
         this._groupBy = null;
         this._select = null;
-        this._join = null;
+        this._join = [];
         this._orderBy = null;
         this._orderDirection = null;
         this._limit = null;
@@ -108,7 +108,7 @@ class Pdo {
     }
 
     leftJoin(joinTable, field1, cond, field2) {
-        this._join = `LEFT JOIN ${joinTable} ON ${field1} ${cond} ${field2}`;
+        this._join.push(`LEFT JOIN ${joinTable} ON ${field1} ${cond} ${field2}`);
         return this;
     }
 
@@ -212,8 +212,10 @@ class Pdo {
             case 'select':
                 query = `SELECT ${this.join(this._select)}
                          FROM ${this._table}`;
-                if (this._join) {
-                    query += ` ${this._join}`;
+                if (this._join.length) {
+                    this._join.map(str => {
+                        query += ` ${str}`;
+                    });
                 }
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
@@ -242,8 +244,8 @@ class Pdo {
             case 'update':
                 query = `UPDATE ${this._table}
                          SET ${this._values?.map((value, i) => {
-                    return `${this._columns[i]} = ${this.escapeData(value)}`;
-                }).join(',')}`;
+                             return `${this._columns[i]} = ${this.escapeData(value)}`;
+                         }).join(',')}`;
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
