@@ -26,6 +26,7 @@ class Pdo {
         this._limit = null;
         this._offset = null;
         this._returning = null;
+        this._conflict = null;
     }
 
     select(select = ['*']) {
@@ -167,6 +168,17 @@ class Pdo {
         return this;
     }
 
+    conflictDoNothing() {
+        this._conflict = `DO NOTHING`;
+        return this;
+    }
+
+    conflictDoUpdate(clause, pairs) {
+        this._conflict = `(${clause}) DO UPDATE SET ${Object.keys(pairs).map(column =>
+            (`${column} = ${this.escapeData(pairs[column])}`)).join(',')}`;
+        return this;
+    }
+
     groupBy(groupBy) {
         this._groupBy = groupBy;
         return this;
@@ -237,6 +249,9 @@ class Pdo {
                 query =
                     `INSERT INTO ${this._table} (${this._columns?.join(',')})
                      VALUES (${this.join(this._values?.map((v) => this.escapeData(v)))})`;
+                if (this._conflict) {
+                    query += ` ON CONFLICT ${this._conflict}`;
+                }
                 if (this._returning) {
                     query += ` RETURNING ${this._returning}`;
                 }
@@ -244,8 +259,11 @@ class Pdo {
             case 'update':
                 query = `UPDATE ${this._table}
                          SET ${this._values?.map((value, i) => {
-                             return `${this._columns[i]} = ${this.escapeData(value)}`;
-                         }).join(',')}`;
+                            return `${this._columns[i]} = ${this.escapeData(value)}`;
+                        }).join(',')}`;
+                if (this._conflict) {
+                    query += ` ON CONFLICT ${this._conflict}`;
+                }
                 if (this._where) {
                     query += ` WHERE ${this._where}`;
                 }
