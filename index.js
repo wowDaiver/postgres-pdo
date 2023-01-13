@@ -168,6 +168,21 @@ class Pdo {
         return this;
     }
 
+    andWithBrace() {
+        this._where = `${this._where} AND (1 = 1`;
+        return this;
+    }
+
+    orWithBrace() {
+        this._where = `${this._where} OR (1 = 1`;
+        return this;
+    }
+
+    closeBrace() {
+        this._where = `${this._where})`;
+        return this;
+    }
+
     conflictDoNothing() {
         this._conflict = `DO NOTHING`;
         return this;
