@@ -12,6 +12,11 @@ class Pdo {
         return this;
     }
 
+    setEscape(escape) {
+        this.escape = escape ?? encodeURI;
+        return this;
+    }
+
     clean() {
         this._type = null;
         this._table = null;
@@ -164,12 +169,12 @@ class Pdo {
     }
 
     andWhereIn(clause, arr) {
-        this._where = `${this._where} AND ${clause} IN (${arr.map(this.escapeData).join(',')})`;
+        this._where = `${this._where} AND ${clause} IN (${arr.map(item => this.escapeData(item)).join(',')})`;
         return this;
     }
 
     andWhereNotIn(clause, arr) {
-        this._where = `${this._where} AND ${clause} NOT IN (${arr.map(this.escapeData).join(',')})`;
+        this._where = `${this._where} AND ${clause} NOT IN (${arr.map(item => this.escapeData(item)).join(',')})`;
         return this;
     }
 
@@ -218,7 +223,7 @@ class Pdo {
 
     escapeData(value) {
         try {
-            if (value === null) {
+            if (value === null || !this.escape) {
                 return value;
             } else if (typeof value === "boolean") {
                 return value;
@@ -279,8 +284,8 @@ class Pdo {
             case 'update':
                 query = `UPDATE ${this._table}
                          SET ${this._values?.map((value, i) => {
-                            return `${this._columns[i]} = ${this.escapeData(value)}`;
-                        }).join(',')}`;
+                             return `${this._columns[i]} = ${this.escapeData(value)}`;
+                         }).join(',')}`;
                 if (this._conflict) {
                     query += ` ON CONFLICT ${this._conflict}`;
                 }
