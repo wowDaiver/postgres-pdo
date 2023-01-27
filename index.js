@@ -168,6 +168,11 @@ class Pdo {
         return this;
     }
 
+    andWhereNotIn(clause, arr) {
+        this._where = `${this._where} AND ${clause} NOT IN (${arr.map(this.escapeData).join(',')})`;
+        return this;
+    }
+
     andWithBrace() {
         this._where = `${this._where} AND (1 = 1`;
         return this;
