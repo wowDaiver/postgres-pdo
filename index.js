@@ -5,6 +5,7 @@ class Pdo {
         this.unescape = options.unescapeCb ?? unescape;
         this.clean();
         this._catch = console.error;
+        this._getLogDuration = options.getLogDuration;
     }
 
     catch(fn) {
@@ -311,9 +312,14 @@ class Pdo {
     }
 
     async execute() {
+        const startTime = new Date().getTime();
         const query = this.getQuery();
         try {
-            return await this.client.unsafe(query);
+            const result = await this.client.unsafe(query);
+            if (this._getLogDuration) {
+                this._getLogDuration(query.replace(/\n/g, ' ').replace(/\s+/g, ' '), new Date().getTime() - startTime);
+            }
+            return result;
         } catch (e) {
             this._catch(e);
         }
