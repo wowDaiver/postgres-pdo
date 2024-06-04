@@ -114,8 +114,8 @@ class Pdo {
         return this;
     }
 
-    leftJoin(joinTable, field1, cond, field2) {
-        this._join.push(`LEFT JOIN ${joinTable} ON ${field1} ${cond} ${field2}`);
+    leftJoin(joinTable, field1, cond, field2, clause, condWhere, value) {
+        this._join.push(`LEFT JOIN ${joinTable} ON ${field1} ${cond} ${field2}${clause ? ` AND ${clause} ${condWhere} ${this.escapeData(value)}` : ''}`);
         return this;
     }
 
