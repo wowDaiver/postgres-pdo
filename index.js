@@ -33,6 +33,7 @@ class Pdo {
         this._offset = null;
         this._returning = null;
         this._conflict = null;
+        this._having = null;
     }
 
     select(select = ['*']) {
@@ -216,6 +217,21 @@ class Pdo {
         return this;
     }
 
+    having(clause, cond, value) {
+        this._having = `${clause} ${cond} ${this.escapeData(value)}`;
+        return this;
+    }
+
+    andHaving(clause, cond, value) {
+        this._having = `${this._having} AND ${clause} ${cond} ${this.escapeData(value)}`;
+        return this;
+    }
+
+    orHaving(clause, cond, value) {
+        this._having = `${this._having} OR ${clause} ${cond} ${this.escapeData(value)}`;
+        return this;
+    }
+
     limit(limit, offset = 0) {
         this._limit = limit;
         this._offset = offset;
@@ -269,6 +285,9 @@ class Pdo {
                 }
                 if (this._offset) {
                     query += ` OFFSET ${this._offset}`;
+                }
+                if (this._having) {
+                    query += ` HAVING ${this._having}`;
                 }
                 break;
             case 'insert':
