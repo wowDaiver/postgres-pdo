@@ -277,6 +277,9 @@ class Pdo {
                 if (this._groupBy) {
                     query += ` GROUP BY ${this._groupBy}`;
                 }
+                if (this._having) {
+                    query += ` HAVING ${this._having}`;
+                }
                 if (this._orderBy) {
                     query += ` ORDER BY ${this._orderBy} ${this._orderDirection}`;
                 }
@@ -286,9 +289,7 @@ class Pdo {
                 if (this._offset) {
                     query += ` OFFSET ${this._offset}`;
                 }
-                if (this._having) {
-                    query += ` HAVING ${this._having}`;
-                }
+
                 break;
             case 'insert':
                 query =
