@@ -217,8 +217,8 @@ class Pdo {
         return this;
     }
 
-    having(clause, cond, value, skipEscape = false) {
-        this._having = `${clause} ${cond} ${skipEscape ? value : this.escapeData(value)}`;
+    having(clause, cond, value) {
+        this._having = `${clause} ${cond} ${this.escapeData(value)}`;
         return this;
     }
 
