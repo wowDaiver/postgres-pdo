@@ -1,8 +1,10 @@
 {
   "name": "postgres-pdo",
-  "version": "0.0.26",
+  "version": "0.1.0",
   "description": "Postgres Data Objects",
   "main": "index.js",
+  "types": "index.d.ts",
+  "keywords": ["postgres", "pdo", "database", "typescript"],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/wowDaiver/postgres-pdo/issues"
   },
-  "homepage": "https://github.com/wowDaiver/postgres-pdo#readme"
+  "homepage": "https://github.com/wowDaiver/postgres-pdo#readme",
+    "dependencies": {
+        "postgres": "^3.4.5"
+    }
 }
