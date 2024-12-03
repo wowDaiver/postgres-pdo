@@ -34,6 +34,7 @@ class Pdo {
         this._returning = null;
         this._conflict = null;
         this._having = null;
+        this._subQueries = [];
     }
 
     select(select = ['*']) {
@@ -238,6 +239,16 @@ class Pdo {
         return this;
     }
 
+    with(subQueries) {
+        if (Array.isArray(subQueries))
+            this._subQueries = [...subQueries];
+
+        if (typeof subQueries === 'string')
+            this._subQueries = [subQueries];
+
+        return this;
+    }
+
     escapeData(value) {
         try {
             if (value === null || !this.escape) {
@@ -289,7 +300,9 @@ class Pdo {
                 if (this._offset) {
                     query += ` OFFSET ${this._offset}`;
                 }
-
+                if (this._subQueries.length) {
+                    query = `WITH ${this._subQueries.join(',')} ${query}`;
+                }
                 break;
             case 'insert':
                 query =
@@ -300,6 +313,9 @@ class Pdo {
                 }
                 if (this._returning) {
                     query += ` RETURNING ${this._returning}`;
+                }
+                if (this._subQueries.length) {
+                    query = `WITH ${this._subQueries.join(',')} ${query}`;
                 }
                 break;
             case 'update':
@@ -316,6 +332,9 @@ class Pdo {
                 if (this._returning) {
                     query += ` RETURNING ${this._returning}`;
                 }
+                if (this._subQueries.length) {
+                    query = `WITH ${this._subQueries.join(',')} ${query}`;
+                }
                 break;
             case 'delete':
                 query = `DELETE
@@ -325,6 +344,9 @@ class Pdo {
                 }
                 if (this._returning) {
                     query += ` RETURNING ${this._returning}`;
+                }
+                if (this._subQueries.length) {
+                    query = `WITH ${this._subQueries.join(',')} ${query}`;
                 }
                 break;
         }

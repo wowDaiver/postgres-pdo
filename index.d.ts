@@ -86,6 +86,8 @@ export class Pdo<T extends { [name: string]: unknown } = any> {
 
     limit(limit: number, offset?: number): Pdo<T>;
 
+    with(subQueries: string | string[]): Pdo<T>;
+
     escapeData(value: any): string;
     join(arr: string[]): string;
 
