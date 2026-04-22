@@ -67,10 +67,10 @@ class Pdo {
     }
 
     select(select = ['*']) {
-        this.clean();
-        this._type = 'select'
-        this._select = select;
-        return this;
+        const query = this.fork();
+        query._type = 'select'
+        query._select = select;
+        return query;
     }
 
     from(table) {
@@ -79,12 +79,12 @@ class Pdo {
     }
 
     update(pairs = null) {
-        this.clean();
-        this._type = 'update';
+        const query = this.fork();
+        query._type = 'update';
         if (pairs) {
-            this.set(pairs);
+            query.set(pairs);
         }
-        return this;
+        return query;
     }
 
     set(pairs) {
@@ -103,19 +103,19 @@ class Pdo {
     }
 
     insert(columns = null) {
-        this.clean();
-        this._type = 'insert';
+        const query = this.fork();
+        query._type = 'insert';
         if (columns) {
             if (Array.isArray(columns)) {
-                this.columns(columns);
+                query.columns(columns);
             } else {
-                this.columns(Object.keys(columns));
-                this.values(Object.values(columns));
+                query.columns(Object.keys(columns));
+                query.values(Object.values(columns));
             }
         } else {
-            this.columns(columns);
+            query.columns(columns);
         }
-        return this;
+        return query;
     }
 
     returning(id) {
@@ -139,10 +139,10 @@ class Pdo {
     }
 
     delete(table) {
-        this.clean();
-        this._type = 'delete';
-        this._table = table;
-        return this;
+        const query = this.fork();
+        query._type = 'delete';
+        query._table = table;
+        return query;
     }
 
     leftJoin(joinTable, field1, cond, field2, clause, condWhere, value) {

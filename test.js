@@ -71,6 +71,26 @@ function createMockClient() {
 
     assert.strictEqual(transactionResult, 99);
 
+    // Verify that parallel queries from the same pdo instance don't interfere
+    const client2 = createMockClient();
+    const sharedPdo = new Pdo(client2);
+
+    const stmt1 = sharedPdo.select().from('users').where('uid', '=', 1).first();
+    const stmt2 = sharedPdo.select().from('payments').where('uuid', '=', 'x');
+
+    assert.strictEqual(
+        stmt1.getQuery(),
+        "SELECT *\n                         FROM users WHERE uid = 1 LIMIT 1"
+    );
+    assert.strictEqual(
+        stmt2.getQuery(),
+        "SELECT *\n                         FROM payments WHERE uuid = 'x'"
+    );
+
+    const [r1, r2] = await Promise.all([stmt1.execute(), stmt2.execute()]);
+    assert.deepStrictEqual(r1, { id: 1, uid: 42 });
+    assert.deepStrictEqual(r2, [{ id: 1, uid: 42 }]);
+
     console.log('postgres-pdo tests passed');
 })().catch((error) => {
     console.error(error);
