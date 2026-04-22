@@ -3,6 +3,7 @@ import postgres = require("postgres");
 interface IPdoOptions {
     escapeCb?: (sqlUnsavedQuery: string) => string;
     unescapeCb?: (sqlUnsavedQuery: string) => string;
+    getLogDuration?: (query: string, durationMs: number) => void;
 }
 
 export class Pdo<T extends { [name: string]: unknown } = any> {
@@ -16,6 +17,14 @@ export class Pdo<T extends { [name: string]: unknown } = any> {
     catch(fn: (error: any) => void): Pdo<T>;
 
     setEscape(escape?: (sqlUnsavedQuery: string) => string): Pdo<T>;
+
+    withClient(client: postgres.Sql<T> | postgres.TransactionSql<T>): Pdo<T>;
+
+    fork(client?: postgres.Sql<T> | postgres.TransactionSql<T>): Pdo<T>;
+
+    transaction<TResult>(
+        fn: (trxPdo: Pdo<T>, trx: postgres.TransactionSql<T>) => Promise<TResult> | TResult
+    ): Promise<TResult>;
 
     clean() : void
 
@@ -88,10 +97,22 @@ export class Pdo<T extends { [name: string]: unknown } = any> {
 
     with(subQueries: string | string[]): Pdo<T>;
 
+    forUpdate(): Pdo<T>;
+
+    forShare(): Pdo<T>;
+
+    skipLocked(): Pdo<T>;
+
+    noWait(): Pdo<T>;
+
+    first(): Pdo<T>;
+
+    returningOne(id: string | string[]): Pdo<T>;
+
     escapeData(value: any): string;
     join(arr: string[]): string;
 
     getQuery(): string | undefined;
 
-    execute(): Promise<T[]>;
+    execute(): Promise<T[] | T | undefined>;
 }

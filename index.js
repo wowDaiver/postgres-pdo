@@ -1,6 +1,7 @@
 class Pdo {
     constructor(client, options = {}) {
         this.client = client;
+        this._options = options;
         this.escape = options.escapeCb ?? encodeURI;
         this.unescape = options.unescapeCb ?? unescape;
         this.clean();
@@ -16,6 +17,30 @@ class Pdo {
     setEscape(escape) {
         this.escape = escape ?? encodeURI;
         return this;
+    }
+
+    withClient(client) {
+        const pdo = new Pdo(client, this._options);
+        pdo._catch = this._catch;
+        pdo._getLogDuration = this._getLogDuration;
+        pdo.escape = this.escape;
+        pdo.unescape = this.unescape;
+        return pdo;
+    }
+
+    fork(client = this.client) {
+        return this.withClient(client);
+    }
+
+    async transaction(fn) {
+        try {
+            return await this.client.begin(async trx => {
+                const trxPdo = this.withClient(trx);
+                return await fn(trxPdo, trx);
+            });
+        } catch (e) {
+            this._catch(e);
+        }
     }
 
     clean() {
@@ -35,6 +60,10 @@ class Pdo {
         this._conflict = null;
         this._having = null;
         this._subQueries = [];
+        this._lock = null;
+        this._skipLocked = false;
+        this._noWait = false;
+        this._first = false;
     }
 
     select(select = ['*']) {
@@ -249,6 +278,39 @@ class Pdo {
         return this;
     }
 
+    forUpdate() {
+        this._lock = 'FOR UPDATE';
+        return this;
+    }
+
+    forShare() {
+        this._lock = 'FOR SHARE';
+        return this;
+    }
+
+    skipLocked() {
+        this._skipLocked = true;
+        return this;
+    }
+
+    noWait() {
+        this._noWait = true;
+        return this;
+    }
+
+    first() {
+        this._first = true;
+        if (!this._limit) {
+            this._limit = 1;
+            this._offset = 0;
+        }
+        return this;
+    }
+
+    returningOne(id) {
+        return this.returning(id).first();
+    }
+
     escapeData(value) {
         try {
             if (value === null || !this.escape) {
@@ -299,6 +361,15 @@ class Pdo {
                 }
                 if (this._offset) {
                     query += ` OFFSET ${this._offset}`;
+                }
+                if (this._lock) {
+                    query += ` ${this._lock}`;
+                }
+                if (this._skipLocked) {
+                    query += ` SKIP LOCKED`;
+                }
+                if (this._noWait) {
+                    query += ` NOWAIT`;
                 }
                 if (this._subQueries.length) {
                     query = `WITH ${this._subQueries.join(',')} ${query}`;
@@ -360,6 +431,9 @@ class Pdo {
             const result = await this.client.unsafe(query);
             if (this._getLogDuration) {
                 this._getLogDuration(query.replace(/\n/g, ' ').replace(/\s+/g, ' '), new Date().getTime() - startTime);
+            }
+            if (this._first) {
+                return result?.[0];
             }
             return result;
         } catch (e) {

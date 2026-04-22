@@ -68,3 +68,54 @@ await pdo
     .where('id', '>', 1)
     .execute();
 ```
+
+###### Transactions
+
+```aidl
+await pdo.transaction(async (trxPdo) => {
+    const user = await trxPdo
+        .select()
+        .from('users')
+        .where('uid', '=', 1)
+        .forUpdate()
+        .first()
+        .execute();
+
+    await trxPdo
+        .update({
+            name: 'Updated'
+        })
+        .table('users')
+        .where('uid', '=', user.uid)
+        .execute();
+});
+```
+
+###### Row Locks
+
+```aidl
+const row = await pdo
+    .select()
+    .from('jobs')
+    .where('status', '=', 'pending')
+    .forUpdate()
+    .skipLocked()
+    .first()
+    .execute();
+```
+
+Available helpers:
+
+- `forUpdate()`
+- `forShare()`
+- `skipLocked()`
+- `noWait()`
+- `first()`
+- `returningOne()`
+
+###### Fork / withClient
+
+```aidl
+const trxPdo = pdo.withClient(trx);
+const isolatedBuilder = pdo.fork();
+```
